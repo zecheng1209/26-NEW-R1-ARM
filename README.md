@@ -162,5 +162,5 @@ RS_Offest_inv(&Joint[0], 1, 3.72270179f);
 
 ## 作者
 
-- 创建日期: 2024
-- 开发平台: STM32F407 + Keil MDK + FreeRTOS
+- 创建日期: 2026/4
+- 开发平台: STM32F407 + Keil MDK 
