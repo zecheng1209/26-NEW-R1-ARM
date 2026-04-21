@@ -66,8 +66,9 @@ void Task_Init(void)
 	HAL_CAN_ActivateNotification(&hcan2, CAN_IT_TX_MAILBOX_EMPTY);
 
 	MotorInit();
-	xTaskCreate(Motor_Drive, "Motor_Drive", 628, NULL, 5, &Motor_Drive_Handle);		  // 驱动
-	xTaskCreate(Motor_reset, "Motor_reset", 300, NULL, 4, &Motor_Reset_Handle);		  // 复位
+	RobStrideResetAngle(&Joint[3].Rs_motor);
+	xTaskCreate(Motor_Drive, "Motor_Drive", 628, NULL, 4, &Motor_Drive_Handle);		  // 驱动
+	//xTaskCreate(Motor_reset, "Motor_reset", 300, NULL, 4, &Motor_Reset_Handle);		  // 复位
 	xTaskCreate(MotorSendTask, "MotorSendTask", 128, NULL, 4, &MotorSendTask_Handle); // 将数据发送到PC
 }
 
@@ -161,33 +162,34 @@ void MotorInit(void)
 	vTaskDelay(2000);
 
 	Joint[0].motor_type = MOTOR_TYPE_RS;
-	PID_Init_Pos(&Joint[0], 4.0f, 0.0f, 0.0f, 100.0f, 2.0f);
-	PID_Init_Vel(&Joint[0], 3.0f, 0.005f, 0.0f, 20.0f, 20.0f);
-	RS_Offest_inv(&Joint[0], 1, 3.72270179f);
+	PID_Init_Pos(&Joint[0], 0.0f, 0.0f, 0.0f, 100.0f, 2.0f);// 位置PID P I D LIMIT  OUT-LIMIT
+	PID_Init_Vel(&Joint[0], 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+	RS_Offest_inv(&Joint[0], 1, 5.94282293f);
 
 	Joint[1].motor_type = MOTOR_TYPE_RM3508;
 	Joint[1].Rm3508_motor.hcan = &hcan1;
 	Joint[1].Rm3508_motor.ID = 0x201;
-	PID_Init_Pos(&Joint[1], 10.0f, 0.0f, 0.0f, 100.0f, 2.5f);
-	PID_Init_Vel(&Joint[1], 15.0f, 0.2f, 0.0f, 40.0f, 50.0f);
+	PID_Init_Pos(&Joint[1], 0.0f, 0.0f, 0.0f, 100.0f, 2.5f);
+	PID_Init_Vel(&Joint[1], 0.0f, 0.0f, 0.0f, 40.0f, 50.0f);
 	RS_Offest_inv(&Joint[1], 1, 0.0f);
 
 	Joint[2].motor_type = MOTOR_TYPE_M2006;
 	Joint[2].M2006_motor.hcan = &hcan1;
 	Joint[2].M2006_motor.ID = 0x202;
-	PID_Init_Pos(&Joint[2], 15.0f, 0.0f, 0.0f, 100.0f, 4.2f);
-	PID_Init_Vel(&Joint[2], 12.0f, 0.5f, 0.0f, 100.0f, 30.0f);
-	RS_Offest_inv(&Joint[2], -1, 0.0f);
+	PID_Init_Pos(&Joint[2], 0.0f, 0.0f, 0.0f, 100.0f, 4.2f);
+	PID_Init_Vel(&Joint[2], 0.0f, 0.0f, 0.0f, 100.0f, 30.0f);
+	RS_Offest_inv(&Joint[2], 1, 0.0f);
 
 	Joint[3].motor_type = MOTOR_TYPE_RS;
-	PID_Init_Pos(&Joint[3], 1.0f, 0.0f, 0.0f, 100.0f, 20.0f);
-	PID_Init_Vel(&Joint[3], 2.0f, 0.2f, 0.0f, 50.0f, 20.0f);
-	RS_Offest_inv(&Joint[3], 1, -1.09951425f);
-
+	PID_Init_Pos(&Joint[3], 0.0f, 0.0f, 0.0f, 100.0f, 2.0f);
+	PID_Init_Vel(&Joint[3], 0.0f, 0.0f, 0.0f, 20.0f, 20.0f);
+	//RobStrideResetAngle(&Joint[3].Rs_motor);不在这里使用，会循环
+	RS_Offest_inv(&Joint[3], 1, 0.0f);
+	
 	Joint[4].motor_type = MOTOR_TYPE_RS;
-	PID_Init_Pos(&Joint[4], 5.0f, 0.0f, 0.0f, 100.0f, 2.0f);
-	PID_Init_Vel(&Joint[4], 1.5f, 0.001f, 0.0f, 20.0f, 20.0f);
-	RS_Offest_inv(&Joint[4], 1, 5.27705526f);
+	PID_Init_Pos(&Joint[4], 0.0f, 0.0f, 0.0f, 100.0f, 2.0f);
+	PID_Init_Vel(&Joint[4], 1.20f, 0.0f, 0.2f, 20.0f, 20.0f);
+	RS_Offest_inv(&Joint[4],  -1, 1.5443823f);
 
 	vTaskDelay(100);
 	RobStrideInit(&Joint[0].Rs_motor, &hcan2, 0x01, RobStride_02);

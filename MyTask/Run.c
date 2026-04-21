@@ -4,20 +4,20 @@
 
 extern uint8_t ready;					   // 电机是否就绪标志位
 Joint_t Joint[5];						   // 5个关节
-uint8_t enable_Joint[5] = {1, 1, 1, 1, 1}; // 5个关节的使能标志位
+uint8_t enable_Joint[5] = {1, 1, 1, 1, 1}; // 5个关节的使能标志位  {0, 0, 0, 0, 0};   {1, 1, 1, 1, 1};
 uint8_t enable_feedforward[5] = {1};	   // 5个关节的前馈使能标志位
 GPIO_PinState sttb=0; 				       // 吸盘开关状态
 TaskHandle_t Motor_Drive_Handle;
 void Motor_Drive(void *param)
 {
 	TickType_t Last_wake_time = xTaskGetTickCount();
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
+	//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
 	for (;;)
 	{
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, sttb);
-		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, sttb);
+		//HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, sttb);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, sttb);// 吸盘开关
 
-		for (uint8_t i = 0; i < 5; i++)
+		for (uint8_t i = 0; i < 4; i++)
 		{
 			float current_rad = 0;
 			float current_omega = 0;
@@ -68,7 +68,44 @@ void Motor_Drive(void *param)
 			if(i==2)
 			vTaskDelay(1);
 		}
-		vTaskDelayUntil(&Last_wake_time, pdMS_TO_TICKS(2));
+
+		// ========== 独立处理 Joint[4] ==========
+		float current_rad4 = Joint[4].Rs_motor.state.rad;
+		float current_omega4 = Joint[4].Rs_motor.state.omega;
+
+		// 位置环 PID
+		PID_Control(current_rad4, Joint[4].exp_rad + Joint[4].pos_offset, &Joint[4].pos_pid);
+		
+		// 速度环 PID
+		float vel_target4 = Joint[4].pos_pid.pid_out + Joint[4].exp_omega;
+		PID_Control(current_omega4, vel_target4, &Joint[4].vel_pid);
+
+		// 发送控制命令给 Joint[4]
+		RobStrideMotionControl(&Joint[4].Rs_motor, Joint[4].Rs_motor.motor_id,
+		((Joint[4].vel_pid.pid_out * enable_Joint[4]) + (Joint[4].exp_torque * enable_feedforward[4])),
+			0, 0, 0, 0);
+		
+		
+/*		
+		// ========== 独立处理 Joint[4] ==========
+		float current_rad4 = Joint[4].Rs_motor.state.rad;
+		float current_omega4 = Joint[4].Rs_motor.state.omega;
+
+		// 位置环 PID
+		PID_Control(current_rad4, Joint[4].exp_rad + Joint[4].pos_offset, &Joint[4].pos_pid);
+		
+		// 速度环 PID
+		float vel_target4 = Joint[4].pos_pid.pid_out + Joint[4].exp_omega;
+		PID_Control(current_omega4, vel_target4, &Joint[4].vel_pid);
+
+		// 发送控制命令给 Joint[4]
+		RobStrideMotionControl(&Joint[4].Rs_motor, Joint[4].Rs_motor.motor_id,
+		((Joint[4].vel_pid.pid_out * enable_Joint[4]) + (Joint[4].exp_torque * enable_feedforward[4])),
+			0, 0, 0, 0);
+			
+*/
+
+		vTaskDelayUntil(&Last_wake_time, pdMS_TO_TICKS(3));
 	}
 }
 
