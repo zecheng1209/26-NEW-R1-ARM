@@ -1,5 +1,6 @@
 # 机械臂控制系统 (Mechanical Arm Control System)
 
+Apr 26, 2026, 2:36 PM GMT+8  提交的是完全体可用
 基于 STM32F407 的 5 自由度机械臂控制系统，支持多种电机类型，采用 FreeRTOS 实时操作系统。
 
 ## 项目概述
