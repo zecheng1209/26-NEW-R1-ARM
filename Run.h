@@ -10,6 +10,14 @@
 
 #define Transmission 2.8f
 
+#define RAD_TO_JOINT0  0.4255319f   // Joint[0] (RobStride): rad * 0.4255319 = 1rad
+#define RAD_TO_JOINT1  0.0014245f   // Joint[1] (RM3508): Angle_DEG * 0.0014245 = 1cm
+#define RAD_TO_JOINT2  0.0008396f   // Joint[2] (M2006): Angle_DEG * 0.0008396 = 1cm
+
+#define JOINT0_TO_RAD  2.352941f    // Joint[0]: 1rad = rad / 2.352941 (1/0.4255319)
+#define JOINT1_TO_RAD  702.136f     // Joint[1]: 1cm = Angle_DEG / 702.136 (1/0.0014245)
+#define JOINT2_TO_RAD  1191.22f     // Joint[2]: 1cm = Angle_DEG / 1191.22 (1/0.0008396)
+
 ////#pragma pack(1)
 
 ////typedef struct{

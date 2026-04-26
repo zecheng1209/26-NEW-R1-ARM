@@ -2,7 +2,7 @@
 #include "usb_trans.h"
 #include "usbd_cdc_if.h"
 //////////////////////////////////////////////////////////////////////////////////////////
-/////待办事项：///////////////////////////////////////////////////////////////////////////
+/////待办事项：（ 已完成 ）   ////////////////////////////////////////////////////////////
 //确认各个轴的转动角度，以及3508和2006运动的厘米数（cm）和 电机实际转过的角度的关系///////
 ////////////////////////////////////////////////////////////////////////////////////////// 
 
@@ -26,6 +26,14 @@ void Motor_Drive(void *param)
 			float current_rad = 0;
 			float current_omega = 0;
 
+			if (i == 0)
+		{
+			// Joint[0] 特殊处理：需要单位转换
+			current_rad = Joint[i].Rs_motor.state.rad * RAD_TO_JOINT0;
+			current_omega = Joint[i].Rs_motor.state.omega * RAD_TO_JOINT0;
+		}
+		else
+		{
 			switch (Joint[i].motor_type)
 			{
 			case MOTOR_TYPE_RS:
@@ -33,14 +41,15 @@ void Motor_Drive(void *param)
 				current_omega = Joint[i].Rs_motor.state.omega;
 				break;
 			case MOTOR_TYPE_RM3508:
-				current_rad = Joint[i].Rm3508_motor.motor.Angle_DEG ;//* 0.0174533f
-				current_omega = Joint[i].Rm3508_motor.motor.Speed ;//* 0.0174533f
+				current_rad = Joint[i].Rm3508_motor.motor.Angle_DEG * RAD_TO_JOINT1;
+				current_omega = Joint[i].Rm3508_motor.motor.Speed ;//* RAD_TO_JOINT1
 				break;
 			case MOTOR_TYPE_M2006:
-				current_rad = Joint[i].M2006_motor.motor.Angle_DEG;//* 0.0174533f
-				current_omega = Joint[i].M2006_motor.motor.Speed ;//* 0.0174533f
+				current_rad = Joint[i].M2006_motor.motor.Angle_DEG * RAD_TO_JOINT2;
+				current_omega = Joint[i].M2006_motor.motor.Speed ;//* RAD_TO_JOINT2
 				break;
 			}
+		}
 
 			PID_Control(current_rad, Joint[i].exp_rad + Joint[i].pos_offset, &Joint[i].pos_pid);
 			PID_Control(current_omega, Joint[i].pos_pid.pid_out + Joint[i].exp_omega, &Joint[i].vel_pid);
@@ -125,23 +134,33 @@ void MotorSendTask(void *param)
 		float raw_omega = 0;
 		float raw_torque = 0;
 
-		switch (Joint[i].motor_type)
+		if (i == 0)
 		{
-		case MOTOR_TYPE_RS:
-			raw_rad   = (Joint[i].Rs_motor.state.rad - Joint[i].pos_offset) * Joint[i].inv_motor;
-			raw_omega = Joint[i].Rs_motor.state.omega * Joint[i].inv_motor;
+			// Joint[0] 特殊处理：需要单位转换
+			raw_rad   = (Joint[i].Rs_motor.state.rad - Joint[i].pos_offset) * Joint[i].inv_motor * RAD_TO_JOINT0;
+			raw_omega = Joint[i].Rs_motor.state.omega * Joint[i].inv_motor * RAD_TO_JOINT0;
 			raw_torque = Joint[i].Rs_motor.state.torque * Joint[i].inv_motor;
-			break;
-		case MOTOR_TYPE_RM3508:
-			raw_rad   = (Joint[i].Rm3508_motor.motor.Angle_DEG  - Joint[i].pos_offset) * Joint[i].inv_motor;// Rm3508_motor.motor.Angle_DEG * 0.0174533f
-			raw_omega = Joint[i].Rm3508_motor.motor.Speed  * Joint[i].inv_motor;// Joint[i].Rm3508_motor.motor.Speed * 0.0174533f
-			raw_torque = Joint[i].Rm3508_motor.motor.TorqueCurrent * 0.01f * Joint[i].inv_motor;
-			break;
-		case MOTOR_TYPE_M2006:
-			raw_rad   = (Joint[i].M2006_motor.motor.Angle_DEG  - Joint[i].pos_offset) * Joint[i].inv_motor;//M2006_motor.motor.Angle_DEG * 0.0174533f
-			raw_omega = Joint[i].M2006_motor.motor.Speed  * Joint[i].inv_motor;//M2006_motor.motor.Speed * 0.0174533f
-			raw_torque = 0;
-			break;
+		}
+		else
+		{
+			switch (Joint[i].motor_type)
+			{
+			case MOTOR_TYPE_RS:
+				raw_rad   = (Joint[i].Rs_motor.state.rad - Joint[i].pos_offset) * Joint[i].inv_motor;
+				raw_omega = Joint[i].Rs_motor.state.omega * Joint[i].inv_motor;
+				raw_torque = Joint[i].Rs_motor.state.torque * Joint[i].inv_motor;
+				break;
+			case MOTOR_TYPE_RM3508:
+				raw_rad   = (Joint[i].Rm3508_motor.motor.Angle_DEG - Joint[i].pos_offset) * Joint[i].inv_motor * RAD_TO_JOINT1;
+				raw_omega = Joint[i].Rm3508_motor.motor.Speed * Joint[i].inv_motor * RAD_TO_JOINT1;
+				raw_torque = Joint[i].Rm3508_motor.motor.TorqueCurrent * 0.01f * Joint[i].inv_motor;
+				break;
+			case MOTOR_TYPE_M2006:
+				raw_rad   = (Joint[i].M2006_motor.motor.Angle_DEG - Joint[i].pos_offset) * Joint[i].inv_motor * RAD_TO_JOINT2;
+				raw_omega = Joint[i].M2006_motor.motor.Speed * Joint[i].inv_motor * RAD_TO_JOINT2;
+				raw_torque = 0;
+				break;
+			}
 		}
 
 		if (i == 0)
@@ -178,16 +197,16 @@ void MotorRecTask(void *param) // 从PC接收电机数据
 		{
 			count++;
 			sttb = armtarget_t.air_pump;
-			Joint[0].exp_rad = armtarget_t.joints[0].rad*Transmission* Joint[0].inv_motor;
-			Joint[0].exp_omega = armtarget_t.joints[0].omega*Transmission* Joint[0].inv_motor;
-			Joint[0].exp_torque = armtarget_t.joints[0].torque/Transmission* Joint[0].inv_motor;
+			Joint[0].exp_rad = armtarget_t.joints[0].rad * RAD_TO_JOINT0 * Transmission * Joint[0].inv_motor;
+			Joint[0].exp_omega = armtarget_t.joints[0].omega * RAD_TO_JOINT0 * Transmission * Joint[0].inv_motor;
+			Joint[0].exp_torque = armtarget_t.joints[0].torque * Transmission * Joint[0].inv_motor;
 
-			Joint[1].exp_rad = armtarget_t.joints[1].rad* Joint[1].inv_motor;
-			Joint[1].exp_omega = armtarget_t.joints[1].omega* Joint[1].inv_motor;
-			Joint[1].exp_torque = armtarget_t.joints[1].torque* Joint[1].inv_motor;
+			Joint[1].exp_rad = armtarget_t.joints[1].rad * RAD_TO_JOINT1 * Joint[1].inv_motor;
+			Joint[1].exp_omega = armtarget_t.joints[1].omega * RAD_TO_JOINT1 * Joint[1].inv_motor;
+			Joint[1].exp_torque = armtarget_t.joints[1].torque * Joint[1].inv_motor;
 
-			Joint[2].exp_rad = armtarget_t.joints[2].rad * Joint[2].inv_motor;
-			Joint[2].exp_omega = armtarget_t.joints[2].omega * Joint[2].inv_motor;
+			Joint[2].exp_rad = armtarget_t.joints[2].rad * RAD_TO_JOINT2 * Joint[2].inv_motor;
+			Joint[2].exp_omega = armtarget_t.joints[2].omega * RAD_TO_JOINT2 * Joint[2].inv_motor;
 			Joint[2].exp_torque = armtarget_t.joints[2].torque * Joint[2].inv_motor;
 
 			Joint[3].exp_rad = armtarget_t.joints[3].rad * Joint[3].inv_motor;
@@ -195,8 +214,8 @@ void MotorRecTask(void *param) // 从PC接收电机数据
 			Joint[3].exp_torque = armtarget_t.joints[3].torque * Joint[3].inv_motor;
 			
 			Joint[4].exp_rad = armtarget_t.joints[4].rad * Joint[4].inv_motor;
-			Joint[4].exp_omega = armtarget_t.joints[4].omega* Joint[4].inv_motor;
-			Joint[4].exp_torque = armtarget_t.joints[4].torque* Joint[4].inv_motor;
+			Joint[4].exp_omega = armtarget_t.joints[4].omega * Joint[4].inv_motor;
+			Joint[4].exp_torque = armtarget_t.joints[4].torque * Joint[4].inv_motor;
 		}
 	}
 }
@@ -207,9 +226,9 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	{
 		uint8_t buf[8];
 		uint32_t ID = CAN_Receive_DataFrame(&hcan1, buf);
-
+		RobStrideRecv_Handle(&Joint[0].Rs_motor, &hcan1, ID, buf);
 		Motor3508Recv(&Joint[1].Rm3508_motor, &hcan1, ID, buf);
-		Motor2006Recv(&Joint[2].M2006_motor, &hcan1, ID, buf);
+
 	}
 }
 
@@ -219,8 +238,9 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	{
 		uint8_t buf[8];
 		uint32_t ID = CAN_Receive_DataFrame(&hcan2, buf);
-		RobStrideRecv_Handle(&Joint[0].Rs_motor, &hcan2, ID, buf);
+		////////////////////////////////////////////////////所有需要升降的机构使用can2
 		RobStrideRecv_Handle(&Joint[3].Rs_motor, &hcan2, ID, buf);
 		RobStrideRecv_Handle(&Joint[4].Rs_motor, &hcan2, ID, buf);
+		Motor2006Recv(&Joint[2].M2006_motor, &hcan2, ID, buf);
 	}
 }
