@@ -11,8 +11,8 @@ typedef struct
     uint32_t ID;
     int32_t offset;
     int32_t actual_pos;
-    PID pos_pid;
-    PID vel_pid;
+//    PID pos_pid;
+//    PID vel_pid;
     uint8_t ready;
 }Motor3508Ex_t;
 
@@ -23,8 +23,8 @@ typedef struct
     uint32_t ID;
     int32_t offset;
     int32_t actual_pos;
-    PID pos_pid;
-    PID vel_pid;
+//    PID pos_pid;
+//    PID vel_pid;
     uint8_t ready;
 }Motor2006Ex_t;
 

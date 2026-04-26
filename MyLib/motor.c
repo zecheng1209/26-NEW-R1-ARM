@@ -115,6 +115,7 @@ HAL_StatusTypeDef MotorSend(CAN_HandleTypeDef *hcan, uint32_t StdId, int16_t *Da
     return CAN_Send_StdDataFrame(hcan, StdId, temp);
 }
 
+
 int16_t QuickCentering(uint16_t Mch, uint16_t Exp) {
     uint16_t Exp_ = (Exp + 4095) % 8192;
     if (Exp_ < Exp)
