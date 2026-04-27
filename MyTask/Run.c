@@ -8,9 +8,9 @@
 
 extern uint8_t ready;					   // 电机是否就绪标志位
 Joint_t Joint[5];						   // 5个关节
-uint8_t enable_Joint[5] = {0, 0, 0, 0, 0}; // 5个关节的使能标志位  {0, 0, 0, 0, 0};   {1, 1, 1, 1, 1};
+uint8_t enable_Joint[5] = {1, 1, 1, 1, 1};// 5个关节的使能标志位  {0, 0, 0, 0, 0};   {1, 1, 1, 1, 1};
 uint8_t enable_feedforward[5] = {1};	   // 5个关节的前馈使能标志位
-GPIO_PinState sttb=0; 				       // 吸盘开关状态
+GPIO_PinState sttb=0; 				          // 吸盘开关状态
 TaskHandle_t Motor_Drive_Handle;
 void Motor_Drive(void *param)
 {
@@ -25,6 +25,7 @@ void Motor_Drive(void *param)
 		{
 			float current_rad = 0;
 			float current_omega = 0;
+			float length = 0 ;
 
 			if (i == 0)
 		{
@@ -39,21 +40,28 @@ void Motor_Drive(void *param)
 			case MOTOR_TYPE_RS:
 				current_rad = Joint[i].Rs_motor.state.rad;
 				current_omega = Joint[i].Rs_motor.state.omega;
+			  
 				break;
 			case MOTOR_TYPE_RM3508:
-				current_rad = Joint[i].Rm3508_motor.motor.Angle_DEG * RAD_TO_JOINT1;
-				current_omega = Joint[i].Rm3508_motor.motor.Speed * RAD_TO_JOINT1;
+				current_rad = Joint[i].Rm3508_motor.motor.Angle_DEG ; //* RAD_TO_JOINT1;
+				current_omega = Joint[i].Rm3508_motor.motor.Speed ;//* RAD_TO_JOINT1
+			  Joint[i].exp_rad = Joint[i].RM_length * JOINT1_TO_RAD ;
 				break;
 			case MOTOR_TYPE_M2006:
-				current_rad = Joint[i].M2006_motor.motor.Angle_DEG * RAD_TO_JOINT2;
-				current_omega = Joint[i].M2006_motor.motor.Speed * RAD_TO_JOINT2;
+				current_rad = Joint[i].M2006_motor.motor.Angle_DEG ; //* RAD_TO_JOINT2;
+				current_omega = Joint[i].M2006_motor.motor.Speed ;//* RAD_TO_JOINT2
+			  Joint[i].exp_rad = Joint[i].RM_length * JOINT2_TO_RAD ;
 				break;
 			}
 		}
-
+		//////////////////////////////////PID计算//////////////////////////////////
+		
 			PID_Control(current_rad, Joint[i].exp_rad + Joint[i].pos_offset, &Joint[i].pos_pid);
 			PID_Control(current_omega, Joint[i].pos_pid.pid_out + Joint[i].exp_omega, &Joint[i].vel_pid);
+		
+	  //////////////////////////////////PID计算//////////////////////////////////
 
+		
 			switch (Joint[i].motor_type)// 根据电机类型选择不同的控制函数
 			{
 			case MOTOR_TYPE_RS:

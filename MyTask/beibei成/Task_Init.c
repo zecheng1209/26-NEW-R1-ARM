@@ -170,7 +170,7 @@ void MotorInit(void)
 	Joint[0].motor_type = MOTOR_TYPE_RS;
 	PID_Init_Pos(&Joint[0], 36.0f, 0.001f, 6.0f, 100.0f, 3.0f);// 位置PID P I D LIMIT  OUT-LIMIT
 	PID_Init_Vel(&Joint[0], 2.2f, 0.0f, 0.6f, 20.0f, 20.0f);
-	RS_Offest_inv(&Joint[0], 1, 1.54476583f );  // 
+	RS_Offest_inv(&Joint[0], 1, 0.0f );  // 1.54476583f
 
 	Joint[1].motor_type = MOTOR_TYPE_RM3508;
 	Joint[1].Rm3508_motor.hcan = &hcan1;
@@ -182,7 +182,7 @@ void MotorInit(void)
 	Joint[2].motor_type = MOTOR_TYPE_M2006;
 	Joint[2].M2006_motor.hcan = &hcan2;
 	Joint[2].M2006_motor.ID = 0x202;
-	PID_Init_Pos(&Joint[2], 1230.0f, 0.5f, 50.0f, 100.0f, 4200.0f);//5.0f, 0.03f, 0.0f,此处有超调，确保过程中一直高速
+	PID_Init_Pos(&Joint[2], 1230.0f, 0.5f, 50.0f, 100.0f, 4200.0f);//5.0f, 0.03f, 0.0f,此处有超调，确保前半过程中一直高速
 	PID_Init_Vel(&Joint[2], 22.0f, 0.5f, 6.0f, 100.0f, 10000.0f);//220.0f, 0.0f, 10.0f,
 	RS_Offest_inv(&Joint[2], 1, 0.0f);
 

@@ -8,7 +8,7 @@
 
 extern uint8_t ready;					   // 电机是否就绪标志位
 Joint_t Joint[5];						   // 5个关节
-uint8_t enable_Joint[5] = {0, 0, 0, 0, 0}; // 5个关节的使能标志位  {0, 0, 0, 0, 0};   {1, 1, 1, 1, 1};
+uint8_t enable_Joint[5] = {1, 1, 1, 1, 1}; // 5个关节的使能标志位  {0, 0, 0, 0, 0};   {1, 1, 1, 1, 1};
 uint8_t enable_feedforward[5] = {1};	   // 5个关节的前馈使能标志位
 GPIO_PinState sttb=0; 				       // 吸盘开关状态
 TaskHandle_t Motor_Drive_Handle;
@@ -42,11 +42,11 @@ void Motor_Drive(void *param)
 				break;
 			case MOTOR_TYPE_RM3508:
 				current_rad = Joint[i].Rm3508_motor.motor.Angle_DEG * RAD_TO_JOINT1;
-				current_omega = Joint[i].Rm3508_motor.motor.Speed * RAD_TO_JOINT1;
+				current_omega = Joint[i].Rm3508_motor.motor.Speed ;//* RAD_TO_JOINT1
 				break;
 			case MOTOR_TYPE_M2006:
 				current_rad = Joint[i].M2006_motor.motor.Angle_DEG * RAD_TO_JOINT2;
-				current_omega = Joint[i].M2006_motor.motor.Speed * RAD_TO_JOINT2;
+				current_omega = Joint[i].M2006_motor.motor.Speed ;//* RAD_TO_JOINT2
 				break;
 			}
 		}

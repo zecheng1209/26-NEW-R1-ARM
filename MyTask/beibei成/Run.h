@@ -15,8 +15,8 @@
 #define RAD_TO_JOINT2  0.0008396f   // Joint[2] (M2006): Angle_DEG * 0.0008396 = 1cm
 
 #define JOINT0_TO_RAD  2.352941f    // Joint[0]: 1rad = rad / 2.352941 (1/0.4255319)
-#define JOINT1_TO_RAD  702.136f     // Joint[1]: 3508  1cm = Angle_DEG / 702.136 (1/0.0014245)
-#define JOINT2_TO_RAD  1191.22f     // Joint[2]: 2006  1cm = Angle_DEG / 1191.22 (1/0.0008396)
+#define JOINT1_TO_RAD  702.136f     // Joint[1]: 1cm = Angle_DEG / 702.136 (1/0.0014245)
+#define JOINT2_TO_RAD  1191.22f     // Joint[2]: 1cm = Angle_DEG / 1191.22 (1/0.0008396)
 
 ////#pragma pack(1)
 
@@ -76,9 +76,7 @@ typedef struct{
     float exp_rad;
     float exp_omega;
     float exp_torque;
-	  float RM_length;
-//	  float rad_to_joint;
-     
+
     PID pos_pid;
     PID vel_pid;
 }Joint_t;
