@@ -18,6 +18,7 @@
 #define JOINT1_TO_RAD  702.136f     // Joint[1]: 3508  1cm = Angle_DEG / 702.136 (1/0.0014245)
 #define JOINT2_TO_RAD  1191.22f     // Joint[2]: 2006  1cm = Angle_DEG / 1191.22 (1/0.0008396)
 
+
 ////#pragma pack(1)
 
 ////typedef struct{

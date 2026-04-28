@@ -14,6 +14,7 @@
 extern Joint_t Joint[5];
 float Motor_Init[5] = {0};
 
+extern volatile uint8_t debug_step; // 调试状态位
 extern TaskHandle_t Motor_Drive_Handle;
 extern TaskHandle_t MotorSendTask_Handle;
 extern TaskHandle_t MotorRecTask_Handle;
@@ -21,6 +22,7 @@ TaskHandle_t Motor_Reset_Handle;
 
 void MotorInit(void);// 电机初始化
 void Motor_reset(void *param);// 电机复位
+void Debug_ActionTask(void *param);//简单多步运动调试任务
 
 bool Float_S(float a, float b) // 浮点数比较
 {
@@ -76,6 +78,9 @@ void Task_Init(void)
 	xTaskCreate(Motor_Drive, "Motor_Drive", 628, NULL, 4, &Motor_Drive_Handle);		  // 驱动
 	//xTaskCreate(Motor_reset, "Motor_reset", 300, NULL, 4, &Motor_Reset_Handle);		  // 复位
 	xTaskCreate(MotorSendTask, "MotorSendTask", 128, NULL, 4, &MotorSendTask_Handle); // 将数据发送到PC
+
+	xTaskCreate(Debug_ActionTask, "Debug_Action", 256, NULL, 3, NULL);// 简单多步运动调试任务
+	
 }
 
 void RampToTarget(float *val, float target, float step) // 斜坡
@@ -127,16 +132,18 @@ void Motor_reset(void *param)
 		RampToTarget(&Joint[1].exp_rad, 0, 0.001f);
 		RampToTarget(&Joint[2].exp_rad, 0, 0.001f);
 		RampToTarget(&Joint[3].exp_rad, 0, 0.005f);
-		RampToTarget(&Joint[4].exp_rad, 0, 0.001f);
+  	RampToTarget(&Joint[4].exp_rad, 0, 0.001f);
+ 	}
 
 		if (Joint_FinInit())
 		{
-			xTaskCreate(MotorRecTask, "MotorRecTask", 200, NULL, 4, &MotorRecTask_Handle);
+			
+			//xTaskCreate(MotorRecTask, "MotorRecTask", 200, NULL, 4, &MotorRecTask_Handle);
 			vTaskDelete(NULL);
-		}
+		
 
 		vTaskDelayUntil(&Last_wake_time, pdMS_TO_TICKS(5));
-	}
+	  }
 }
 
 void PID_Init_Pos(Joint_t *Joint, float kp, float ki, float kd, float limit, float pid_out)
@@ -175,8 +182,8 @@ void MotorInit(void)
 	Joint[1].motor_type = MOTOR_TYPE_RM3508;
 	Joint[1].Rm3508_motor.hcan = &hcan1;
 	Joint[1].Rm3508_motor.ID = 0x201;
-	PID_Init_Pos(&Joint[1], 5.5f, 0.0f, 0.0f, 100.0f, 9200.0f);//为保证速度有很多超调
-	PID_Init_Vel(&Joint[1], 27.0f, 1.0f, 0.0f, 400.0f, 16384.0f);
+	PID_Init_Pos(&Joint[1], 2.6f, 0.0f, 0.0f, 100.0f, 9200.0f);//为保证速度有很多超调
+	PID_Init_Vel(&Joint[1], 22.0f, 1.0f, 0.0f, 400.0f, 16384.0f);
 	RS_Offest_inv(&Joint[1], 1, 0.0f);
 
 	Joint[2].motor_type = MOTOR_TYPE_M2006;
@@ -194,7 +201,7 @@ void MotorInit(void)
 	
 	Joint[4].motor_type = MOTOR_TYPE_RS;
 	PID_Init_Pos(&Joint[4], 10.0f, 0.0f, 0.0f, 10.0f, 20.0f);
-	PID_Init_Vel(&Joint[4], 2.0f, 0.05f, 0.0f, 1000.0f, 6.0f);
+	PID_Init_Vel(&Joint[4], 1.8f, 0.05f, 0.0f, 1000.0f, 6.0f);
 	RS_Offest_inv(&Joint[4],  -1, 1.2943823f);
 
 

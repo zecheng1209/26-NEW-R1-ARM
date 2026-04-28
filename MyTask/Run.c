@@ -10,8 +10,10 @@ extern uint8_t ready;					   // 电机是否就绪标志位
 Joint_t Joint[5];						   // 5个关节
 uint8_t enable_Joint[5] = {1, 1, 1, 1, 1};// 5个关节的使能标志位  {0, 0, 0, 0, 0};   {1, 1, 1, 1, 1};
 uint8_t enable_feedforward[5] = {1};	   // 5个关节的前馈使能标志位
-GPIO_PinState sttb=0; 				          // 吸盘开关状态
 TaskHandle_t Motor_Drive_Handle;
+GPIO_PinState sttb=0; 				          // 吸盘开关状态
+volatile uint8_t debug_step = 0;  // 调试状态位
+
 void Motor_Drive(void *param)
 {
 	TickType_t Last_wake_time = xTaskGetTickCount();
@@ -127,6 +129,61 @@ void CDC_Recv_Cb(uint8_t *src, uint16_t size)
 		xSemaphoreGive(cdc_recv_semphr);
 	}
 }
+
+void Debug_ActionTask(void *param)
+{
+    TickType_t Last_wake_time = xTaskGetTickCount();
+    
+    for (;;)
+    {
+        switch (debug_step)
+        {
+            case 0:  // 停止状态
+                break;
+                
+            case 1:  // 步骤1：抬升达到方块上方水平面
+//                Joint[0].exp_rad = 0.0f;
+						    Joint[1].RM_length = 42.0f;
+						    Joint[2].RM_length = 0.0f;
+//						    Joint[3].exp_rad = 0.0f;
+//						    Joint[4].exp_rad = 0.0f;//注意以初始态为0
+                break;
+                
+            case 2:  // 步骤2：前进
+						    Joint[1].RM_length = 42.0f;
+						    Joint[2].RM_length = 19.0f;
+						    break;
+						//步骤完成后要进行开启气泵的操作
+						
+						case 3://步骤3:下压开启气泵						
+						    Joint[1].RM_length = 37.0f;
+						    Joint[2].RM_length = 19.0f;
+                break;
+          
+						
+            case 4:  // 步骤4：抬起
+						    Joint[1].RM_length = 43.0f;
+						    Joint[2].RM_length = 19.0f;
+						    break;
+
+						case 5://步骤5:撤回
+						    Joint[1].RM_length = 43.0f;
+						    Joint[2].RM_length = 5.0f;
+                break;
+						
+						case 6:  // 动作4：简单甩动测试方块是否会掉落
+						    Joint[1].RM_length = 43.0f;
+						    Joint[2].RM_length = 5.0f;
+						    Joint[3].exp_rad = 0.0f;
+						    Joint[4].exp_rad = 0.0f;//注意以初始态为0
+
+                break;
+        }
+        
+        vTaskDelayUntil(&Last_wake_time, pdMS_TO_TICKS(10));
+    }
+}
+
 
 void MotorSendTask(void *param)
 {
